@@ -1,0 +1,18 @@
+{
+  "name": "Streak & Habit Calendar",
+  "short_name": "StreakCal",
+  "description": "Daily streak counter, habit tracker, and interactive calendar",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

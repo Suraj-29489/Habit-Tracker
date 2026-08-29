@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#0f172a" />
+  <rect x="76" y="96" width="360" height="340" rx="32" fill="#1e293b" stroke="#334155" stroke-width="12" />
+  <rect x="76" y="96" width="360" height="80" rx="32" fill="url(#grad1)" />
+  <rect x="140" y="60" width="32" height="60" rx="16" fill="#f8fafc" />
+  <rect x="340" y="60" width="32" height="60" rx="16" fill="#f8fafc" />
+  
+  <!-- Calendar Grid Marks -->
+  <circle cx="160" cy="240" r="18" fill="#475569" />
+  <circle cx="256" cy="240" r="18" fill="#475569" />
+  <circle cx="352" cy="240" r="18" fill="#475569" />
+  
+  <circle cx="160" cy="320" r="18" fill="#475569" />
+  <circle cx="256" cy="320" r="22" fill="url(#grad2)" />
+  <path d="M246 320l6 6 14-14" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="352" cy="320" r="18" fill="#6366f1" />
+  
+  <!-- Counter Flame/Star Badge -->
+  <path d="M380 370c0-24 16-36 16-52 0-22-16-40-36-40-6 0-12 2-18 5 6 12 4 28-5 38-12 13-18 30-18 49 0 35 28 64 63 64 35 0 63-29 63-64 0-18-8-34-21-46 3 15-4 32-14 42-9 9-20 14-30 4z" fill="#f59e0b" opacity="0.9"/>
+</svg>
+
