@@ -52,7 +52,7 @@ function initApp() {
 
   // 2. Register Service Worker for PWA / offline support
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
       console.log('ServiceWorker registration skipped/failed:', err);
     });
   }

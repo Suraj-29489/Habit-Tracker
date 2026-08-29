@@ -1,24 +1,28 @@
-const CACHE_NAME = 'streak-calendar-v2';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './css/style.css',
-  './js/app.js',
-  './js/calendar.js',
-  './js/storage.js',
-  './js/notifications.js',
-  './assets/icon.svg',
-  './assets/icon-192.png',
-  './assets/icon-512.png',
-  './assets/apple-touch-icon.png',
-  './manifest.json'
+const CACHE_NAME = 'streak-calendar-v3';
+
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/css/style.css',
+  '/js/app.js',
+  '/js/calendar.js',
+  '/js/storage.js',
+  '/js/notifications.js',
+  '/assets/icon.svg',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
+  '/assets/apple-touch-icon.png',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+      return cache.addAll(ASSETS).catch((err) => {
+        console.warn('Some assets could not be pre-cached:', err);
+      });
+    })
   );
 });
 
@@ -37,31 +41,52 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch fresh copy in background
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+  const url = new URL(event.request.url);
+
+  // For HTML navigation requests (opening app / navigating pages)
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return response;
+        })
+        .catch(async () => {
+          // Offline fallback
+          const cached = await caches.match('/index.html') || await caches.match('/') || await caches.match('./index.html');
+          if (cached) return cached;
+          return new Response('Offline - App ready on reload', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' }
+          });
+        })
+    );
+    return;
+  }
+
+  // For static assets (CSS, JS, Images, Icons)
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) {
+        // Fetch in background to update cache
+        fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+            }
+          })
+          .catch(() => {});
+        return cached;
+      }
+      return fetch(event.request).catch(async () => {
+        return caches.match(event.request);
       });
-    }).catch(() => caches.match('./index.html'))
+    })
   );
 });
 
@@ -79,7 +104,7 @@ self.addEventListener('notificationclick', (event) => {
         }
         return client.focus();
       }
-      return clients.openWindow('./');
+      return clients.openWindow('/');
     })
   );
 });
