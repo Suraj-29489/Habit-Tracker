@@ -1,5 +1,5 @@
 /**
- * calendar.js - Calendar generation, date math, streak computations, and day rendering
+ * calendar.js - High-Precision Calendar, UTC-Safe Date Math & Streak Analytics
  */
 
 const CalendarService = {
@@ -21,6 +21,7 @@ const CalendarService = {
    * @returns {string}
    */
   formatDate(date) {
+    if (!date) date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -28,14 +29,14 @@ const CalendarService = {
   },
 
   /**
-   * Parse YYYY-MM-DD string to local Date object (midnight local time)
+   * Parse YYYY-MM-DD string to local Date object
    * @param {string} str 
    * @returns {Date}
    */
   parseDate(str) {
     if (!str) return new Date();
     const parts = str.split('-').map(Number);
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+    return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
   },
 
   /**
@@ -54,15 +55,18 @@ const CalendarService = {
 
   /**
    * Calculate difference in days between two date strings (date2 - date1)
+   * Uses UTC timestamps to prevent any Daylight Saving Time / timezone shifting issues.
    * @param {string} dateStr1 YYYY-MM-DD
    * @param {string} dateStr2 YYYY-MM-DD
    * @returns {number}
    */
   diffDays(dateStr1, dateStr2) {
-    const d1 = this.parseDate(dateStr1);
-    const d2 = this.parseDate(dateStr2);
-    const timeDiff = d2.getTime() - d1.getTime();
-    return Math.round(timeDiff / (1000 * 60 * 60 * 24));
+    if (!dateStr1 || !dateStr2) return 0;
+    const p1 = dateStr1.split('-').map(Number);
+    const p2 = dateStr2.split('-').map(Number);
+    const utc1 = Date.UTC(p1[0], p1[1] - 1, p1[2]);
+    const utc2 = Date.UTC(p2[0], p2[1] - 1, p2[2]);
+    return Math.round((utc2 - utc1) / (1000 * 60 * 60 * 24));
   },
 
   /**
@@ -72,6 +76,7 @@ const CalendarService = {
    * @returns {boolean}
    */
   isDateInEvent(dateStr, event) {
+    if (!event || !event.startDate) return false;
     const dayIndex = this.diffDays(event.startDate, dateStr) + 1;
     if (dayIndex < 1) return false;
 
@@ -130,7 +135,6 @@ const CalendarService = {
       return { currentStreak: 0, maxStreak: 0, totalCompletedDays: 0 };
     }
 
-    let currentStreak = 0;
     let maxStreak = 0;
     let tempStreak = 0;
     let totalCompletedDays = 0;
@@ -151,7 +155,6 @@ const CalendarService = {
           maxStreak = tempStreak;
         }
       } else {
-        // Only break current streak if it's strictly before today, or if today is ended without check
         if (checkDateStr !== todayStr) {
           tempStreak = 0;
         }
@@ -168,7 +171,7 @@ const CalendarService = {
       activeStreak++;
       curDate.setDate(curDate.getDate() - 1);
     } else {
-      // If today not yet completed, check if streak from yesterday is still valid
+      // If today not yet completed, check if streak from yesterday continues
       curDate.setDate(curDate.getDate() - 1);
     }
 
@@ -204,7 +207,6 @@ const CalendarService = {
 
     const totalDaysInMonth = lastDayOfMonth.getDate();
     const startDayOfWeek = firstDayOfMonth.getDay(); // 0 (Sun) to 6 (Sat)
-
     const prevMonthLastDay = new Date(year, month, 0).getDate();
 
     const todayStr = this.formatDate(new Date());
@@ -260,7 +262,7 @@ const CalendarService = {
           dayNumber: dayInfo.dayNumber,
           totalDays: dayInfo.totalDays,
           isOngoing: dayInfo.isOngoing,
-          label: dayInfo.label, // e.g. "Day 1"
+          label: dayInfo.label,
           isCompleted,
           progress
         };
@@ -283,4 +285,3 @@ const CalendarService = {
     };
   }
 };
-

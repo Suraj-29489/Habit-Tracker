@@ -47,48 +47,54 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
-  // 1. Register Service Worker for PWA / offline support
+  // 1. Initialize Storage Service (loads and caches all persisted data)
+  StorageService.init();
+
+  // 2. Register Service Worker for PWA / offline support
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(err => {
       console.log('ServiceWorker registration skipped/failed:', err);
     });
   }
 
-  // 2. Set initial date state
+  // 3. Set initial date state
   AppState.selectedDateStr = CalendarService.formatDate(AppState.currentDate);
 
-  // 3. Initialize default sample event if first time launch
+  // 4. Initialize default sample event only if first time launch ever
   initSampleDataIfEmpty();
 
-  // 4. Bind UI Event Listeners
+  // 5. Bind UI Event Listeners
   bindEvents();
 
-  // 5. Initial Render
+  // 6. Initial Render
   renderAll();
 
-  // 6. Start Notification Engine
+  // 7. Start Notification Engine
   NotificationService.startScheduler();
 }
 
 /**
- * Creates an initial welcoming tracker if the user has no events yet
+ * Creates an initial welcoming tracker ONLY on the very first visit
  */
 function initSampleDataIfEmpty() {
-  const events = StorageService.getEvents();
-  if (events.length === 0) {
-    const todayStr = CalendarService.formatDate(new Date());
-    StorageService.saveEvent({
-      title: 'Daily Goal & Habit Tracker',
-      startDate: todayStr,
-      durationDays: 30,
-      isOngoing: false,
-      color: '#6366f1',
-      checklist: [
-        { id: 'chk_1', text: 'Daily Check-in & Stayed on Track' },
-        { id: 'chk_2', text: 'Mindfulness / Cold Shower / Exercise' },
-        { id: 'chk_3', text: 'Reflection / Journaling' }
-      ]
-    });
+  if (!StorageService.hasInitialized()) {
+    const events = StorageService.getEvents();
+    if (events.length === 0) {
+      const todayStr = CalendarService.formatDate(new Date());
+      StorageService.saveEvent({
+        title: 'Daily Goal & Habit Tracker',
+        startDate: todayStr,
+        durationDays: 30,
+        isOngoing: false,
+        color: '#6366f1',
+        checklist: [
+          { id: 'chk_1', text: 'Daily Check-in & Stayed on Track' },
+          { id: 'chk_2', text: 'Mindfulness / Cold Shower / Exercise' },
+          { id: 'chk_3', text: 'Reflection / Journaling' }
+        ]
+      });
+    }
+    StorageService.setInitialized();
   }
 }
 
@@ -151,7 +157,7 @@ function bindEvents() {
 
   // Duration Chip Buttons
   document.querySelectorAll('.chip-btn[data-days]').forEach(chip => {
-    chip.addEventListener('click', (e) => {
+    chip.addEventListener('click', () => {
       document.querySelectorAll('.chip-btn[data-days]').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
 
@@ -470,7 +476,7 @@ function openDayDetailModal(dateStr) {
           // Toggle state in DOM
           itemEl.classList.toggle('checked', newChecked);
 
-          // Save in storage
+          // Save in storage immediately
           StorageService.toggleChecklistItem(dateStr, evtId, chkId, newChecked);
 
           // Optional subtle haptic feedback
@@ -478,7 +484,7 @@ function openDayDetailModal(dateStr) {
             navigator.vibrate(20);
           }
 
-          // Check if now fully completed and update card badge
+          // Check if now fully completed and update card banner
           const updatedCompleted = StorageService.isEventFullyCompletedOnDate(evt, dateStr);
           const banner = card.querySelector('.day-event-counter-banner');
           if (banner) {
@@ -525,11 +531,11 @@ function openCreateEventModal(startDateStr = null) {
   // Render Color Picker
   renderColorPicker('#6366f1');
 
-  // Reset & Populate Checklist Builder
+  // Reset & Populate Checklist Builder with stable default IDs
   const checklistContainer = document.getElementById('checklistBuilderContainer');
   checklistContainer.innerHTML = '';
-  addChecklistBuilderItem('Stayed Clean & Focused');
-  addChecklistBuilderItem('Completed Daily Goal');
+  addChecklistBuilderItem('Stayed Clean & Focused', 'chk_1');
+  addChecklistBuilderItem('Completed Daily Goal', 'chk_2');
 
   openModal('createEventModal');
 }
@@ -558,7 +564,7 @@ function openEditEventModal(eventId) {
     if (ongoingChip) ongoingChip.classList.add('active');
     customDaysGroup.style.display = 'none';
     customDaysInput.value = '';
-  } else if ([7, 10, 21, 30, 90].includes(event.durationDays)) {
+  } else if ([7, 10, 20, 21, 30, 90].includes(event.durationDays)) {
     const matchingChip = document.querySelector(`.chip-btn[data-days="${event.durationDays}"]`);
     if (matchingChip) matchingChip.classList.add('active');
     customDaysGroup.style.display = 'none';
@@ -573,13 +579,13 @@ function openEditEventModal(eventId) {
   // Color
   renderColorPicker(event.color || '#6366f1');
 
-  // Checklist items
+  // Checklist items - preserving exact IDs
   const checklistContainer = document.getElementById('checklistBuilderContainer');
   checklistContainer.innerHTML = '';
   if (event.checklist && event.checklist.length > 0) {
-    event.checklist.forEach(item => addChecklistBuilderItem(item.text));
+    event.checklist.forEach(item => addChecklistBuilderItem(item.text, item.id));
   } else {
-    addChecklistBuilderItem('Completed Daily Goal');
+    addChecklistBuilderItem('Completed Daily Goal', 'chk_1');
   }
 
   openModal('createEventModal');
@@ -610,10 +616,12 @@ function renderColorPicker(selectedColor) {
 /**
  * Add a checklist item row to the builder
  */
-function addChecklistBuilderItem(initialText = '') {
+function addChecklistBuilderItem(initialText = '', existingId = null) {
   const container = document.getElementById('checklistBuilderContainer');
   const row = document.createElement('div');
   row.className = 'checklist-builder-item';
+  const itemId = existingId || ('chk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+  row.setAttribute('data-item-id', itemId);
 
   row.innerHTML = `
     <span style="color:var(--text-muted)">☑</span>
@@ -666,16 +674,15 @@ function handleSaveEvent(e) {
   const selectedColorEl = document.querySelector('.color-option.selected');
   const color = selectedColorEl ? selectedColorEl.getAttribute('data-color') : '#6366f1';
 
-  // Checklist items
-  const checklistInputs = document.querySelectorAll('#checklistBuilderContainer input');
+  // Checklist items - read from data-item-id to preserve IDs
+  const checklistRows = document.querySelectorAll('#checklistBuilderContainer .checklist-builder-item');
   const checklist = [];
-  checklistInputs.forEach((inp, idx) => {
-    const text = inp.value.trim();
+  checklistRows.forEach((row, idx) => {
+    const inp = row.querySelector('input');
+    const text = inp ? inp.value.trim() : '';
+    const id = row.getAttribute('data-item-id') || `chk_${idx + 1}_${Date.now()}`;
     if (text) {
-      checklist.push({
-        id: `chk_${idx + 1}_${Date.now()}`,
-        text
-      });
+      checklist.push({ id, text });
     }
   });
 
@@ -902,6 +909,3 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
-
-
