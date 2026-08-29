@@ -668,13 +668,23 @@ button, input, select, textarea {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   width: 100%;
   max-width: 540px;
-  max-height: 88vh;
+  max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   transform: translateY(100%);
   transition: transform var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-container form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 @media (min-width: 640px) {
@@ -686,6 +696,7 @@ button, input, select, textarea {
   .modal-container {
     border-radius: var(--radius-lg);
     max-height: 85vh;
+    max-height: 85dvh;
     transform: scale(0.95);
   }
 
@@ -712,6 +723,7 @@ button, input, select, textarea {
   opacity: 0.5;
   border-radius: var(--radius-full);
   margin: 10px auto 4px;
+  flex-shrink: 0;
 }
 
 @media (min-width: 640px) {
@@ -726,6 +738,7 @@ button, input, select, textarea {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .modal-title {
@@ -753,21 +766,44 @@ button, input, select, textarea {
 }
 
 .modal-body {
-  padding: 18px;
+  padding: 16px 18px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .modal-footer {
   padding: 14px 18px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
   background: var(--bg-secondary);
+  flex-shrink: 0;
 }
 
 /* Form Groups & Inputs */
