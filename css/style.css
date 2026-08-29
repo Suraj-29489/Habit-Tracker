@@ -645,7 +645,7 @@ button, input, select, textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   z-index: 100;
@@ -655,6 +655,7 @@ button, input, select, textarea {
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-normal);
+  padding: 0;
 }
 
 .modal-overlay.active {
@@ -668,8 +669,8 @@ button, input, select, textarea {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   width: 100%;
   max-width: 540px;
-  max-height: 90vh;
-  max-height: 90dvh;
+  max-height: 85vh;
+  max-height: 85dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -684,6 +685,7 @@ button, input, select, textarea {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+  max-height: 100%;
   overflow: hidden;
 }
 
@@ -767,9 +769,10 @@ button, input, select, textarea {
 
 .modal-body {
   padding: 16px 18px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain;
+  touch-action: pan-y;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -786,12 +789,12 @@ button, input, select, textarea {
 }
 
 .modal-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 .modal-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .modal-footer {
@@ -804,6 +807,8 @@ button, input, select, textarea {
   gap: 10px;
   background: var(--bg-secondary);
   flex-shrink: 0;
+  position: relative;
+  z-index: 5;
 }
 
 /* Form Groups & Inputs */
