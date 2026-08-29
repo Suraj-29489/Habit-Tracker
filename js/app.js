@@ -24,6 +24,23 @@ const COLOR_PRESETS = [
   '#3b82f6'  // Blue
 ];
 
+// PWA Install Prompt State
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const installBtn = document.getElementById('installAppBtn');
+  if (installBtn) installBtn.style.display = 'inline-flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const installBtn = document.getElementById('installAppBtn');
+  if (installBtn) installBtn.style.display = 'none';
+  showToast('🎉 App installed successfully to your home screen!');
+});
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -165,6 +182,13 @@ function bindEvents() {
     closeModal('dayDetailModal');
     openCreateEventModal(AppState.selectedDateStr);
   });
+
+  // PWA Install Handlers
+  const installAppBtn = document.getElementById('installAppBtn');
+  if (installAppBtn) installAppBtn.addEventListener('click', triggerInstallPrompt);
+
+  const settingsInstallBtn = document.getElementById('settingsInstallBtn');
+  if (settingsInstallBtn) settingsInstallBtn.addEventListener('click', triggerInstallPrompt);
 
   // Settings Actions
   document.getElementById('notificationToggleBtn').addEventListener('click', handleToggleNotification);
@@ -839,6 +863,34 @@ function showToast(message) {
 }
 
 /**
+ * Trigger PWA Install Prompt for Android/Chrome/Desktop or guide iOS users
+ */
+async function triggerInstallPrompt() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choiceResult = await deferredInstallPrompt.userChoice;
+    if (choiceResult.outcome === 'accepted') {
+      showToast('Installing app to your device...');
+    }
+    deferredInstallPrompt = null;
+    const installBtn = document.getElementById('installAppBtn');
+    if (installBtn) installBtn.style.display = 'none';
+  } else {
+    // Check device type
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    if (isStandalone) {
+      showToast('App is already installed and running as standalone!');
+    } else if (isIOS) {
+      showToast('To install on iPhone/iPad: Tap the Share button (📤) in Safari and choose "Add to Home Screen" 📲');
+    } else {
+      showToast('To install: Open browser menu (⋮) and tap "Install app" or "Add to Home screen" 📲');
+    }
+  }
+}
+
+/**
  * Simple HTML escape helper
  */
 function escapeHtml(str) {
@@ -850,4 +902,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+
 

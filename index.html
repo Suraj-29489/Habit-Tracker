@@ -11,8 +11,9 @@
 
   <!-- PWA Manifest & Favicon -->
   <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
-  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="css/style.css" />
@@ -35,6 +36,10 @@
       </div>
 
       <div class="header-actions">
+        <button id="installAppBtn" class="btn btn-secondary" style="display:none;" title="Install on phone">
+          <span>📲</span>
+          <span>Install App</span>
+        </button>
         <button id="settingsBtn" class="btn btn-icon" title="Settings &amp; Backup">⚙️</button>
         <button id="newTrackerHeaderBtn" class="btn btn-primary">
           <span>+</span>
@@ -229,6 +234,17 @@
         <div class="form-group">
           <label class="form-label" for="reminderTimeInput">Daily Reminder Time</label>
           <input type="time" id="reminderTimeInput" class="form-input" value="20:00" />
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-color); margin: 6px 0;" />
+
+        <!-- Install Web App Section -->
+        <div class="form-group">
+          <label class="form-label">Install as Mobile App</label>
+          <button type="button" id="settingsInstallBtn" class="btn btn-secondary" style="width:100%; justify-content:center;">
+            📲 Install on Home Screen
+          </button>
+          <span class="form-hint">Add this app to your phone's home screen for offline access and full-screen experience.</span>
         </div>
 
         <hr style="border:0; border-top:1px solid var(--border-color); margin: 6px 0;" />
