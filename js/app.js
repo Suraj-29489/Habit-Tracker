@@ -183,6 +183,15 @@ function bindEvents() {
     addChecklistBuilderItem('');
   });
 
+  // Clear all checkboxes for manual entry only
+  const clearChecklistBtn = document.getElementById('clearChecklistBtn');
+  if (clearChecklistBtn) {
+    clearChecklistBtn.addEventListener('click', () => {
+      document.getElementById('checklistBuilderContainer').innerHTML = '';
+      showToast('All checkboxes removed. Tracker will use Daily Manual Notes!');
+    });
+  }
+
   // Day Modal: Add event shortcut
   document.getElementById('dayModalAddEventBtn').addEventListener('click', () => {
     closeModal('dayDetailModal');
@@ -426,14 +435,27 @@ function openDayDetailModal(dateStr) {
       const dayInfo = CalendarService.getEventDayInfo(dateStr, evt);
       const isCompleted = StorageService.isEventFullyCompletedOnDate(evt, dateStr);
       const checksMap = StorageService.getEventDayChecklist(dateStr, evt.id);
+      const savedNote = StorageService.getEventDayNotes(dateStr, evt.id);
 
       const card = document.createElement('div');
       card.className = 'day-event-card';
       card.style.borderLeft = `4px solid ${evt.color || '#6366f1'}`;
 
-      let checklistHtml = '<div style="display:flex; flex-direction:column; gap:8px;">';
+      // Custom Quote Banner
+      let quoteHtml = '';
+      if (evt.customQuote && evt.customQuote.trim().length > 0) {
+        quoteHtml = `
+          <div class="day-quote-banner">
+            <span class="day-quote-icon">“</span>
+            <span>${escapeHtml(evt.customQuote)}</span>
+          </div>
+        `;
+      }
 
+      // Checkboxes section
+      let checklistHtml = '';
       if (evt.checklist && evt.checklist.length > 0) {
+        checklistHtml = '<div style="display:flex; flex-direction:column; gap:8px;">';
         evt.checklist.forEach(item => {
           const isChecked = Boolean(checksMap[item.id]);
           checklistHtml += `
@@ -443,17 +465,31 @@ function openDayDetailModal(dateStr) {
             </div>
           `;
         });
+        checklistHtml += '</div>';
       } else {
-        // Fallback single completion checkbox
-        const isChecked = Boolean(checksMap['default_check']);
-        checklistHtml += `
-          <div class="day-check-item ${isChecked ? 'checked' : ''}" data-evt-id="${evt.id}" data-chk-id="default_check">
+        // Manual entry / No checkboxes mode
+        const isDone = Boolean(checksMap['default_check'] || (savedNote && savedNote.trim().length > 0));
+        checklistHtml = `
+          <div class="day-check-item ${isDone ? 'checked' : ''}" data-evt-id="${evt.id}" data-chk-id="default_check">
             <div class="custom-checkbox"></div>
-            <span class="day-check-text">Completed Day's Target</span>
+            <span class="day-check-text">${isDone ? '✓ Day Goal Completed & Logged' : 'Mark Day as Completed'}</span>
           </div>
         `;
       }
-      checklistHtml += '</div>';
+
+      // Daily Manual Notes / Reflection Textarea (shown if enableNotes !== false)
+      let notesHtml = '';
+      if (evt.enableNotes !== false) {
+        notesHtml = `
+          <div class="day-notes-section">
+            <div class="day-notes-header">
+              <span>✍️ Daily Manual Note / Reflection</span>
+              <span class="save-note-status" id="noteStatus_${evt.id}">${savedNote ? 'Saved ✓' : ''}</span>
+            </div>
+            <textarea class="day-notes-textarea" id="noteInput_${evt.id}" placeholder="Write your thoughts, daily accomplishments, or notes for today...">${escapeHtml(savedNote)}</textarea>
+          </div>
+        `;
+      }
 
       card.innerHTML = `
         <div class="day-event-card-header">
@@ -462,7 +498,9 @@ function openDayDetailModal(dateStr) {
             ${isCompleted ? '✓ ' : '🔥 '}${dayInfo.label}
           </span>
         </div>
+        ${quoteHtml}
         ${checklistHtml}
+        ${notesHtml}
       `;
 
       // Attach checkbox click handlers
@@ -479,9 +517,16 @@ function openDayDetailModal(dateStr) {
           // Save in storage immediately
           StorageService.toggleChecklistItem(dateStr, evtId, chkId, newChecked);
 
-          // Optional subtle haptic feedback
           if (navigator.vibrate) {
             navigator.vibrate(20);
+          }
+
+          // Update card banner & text if manual mode
+          if (!evt.checklist || evt.checklist.length === 0) {
+            const checkText = itemEl.querySelector('.day-check-text');
+            if (checkText) {
+              checkText.textContent = newChecked ? '✓ Day Goal Completed & Logged' : 'Mark Day as Completed';
+            }
           }
 
           // Check if now fully completed and update card banner
@@ -502,6 +547,35 @@ function openDayDetailModal(dateStr) {
           }
         });
       });
+
+      // Attach auto-save notes listener
+      const noteInput = card.querySelector(`#noteInput_${evt.id}`);
+      if (noteInput) {
+        const noteStatus = card.querySelector(`#noteStatus_${evt.id}`);
+        let debounceTimer = null;
+
+        noteInput.addEventListener('input', (e) => {
+          if (noteStatus) noteStatus.textContent = 'Saving...';
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            const noteVal = e.target.value;
+            StorageService.saveDayNotes(dateStr, evt.id, noteVal);
+            if (noteStatus) noteStatus.textContent = 'Saved ✓';
+
+            // Check if now completed in manual notes mode
+            const updatedCompleted = StorageService.isEventFullyCompletedOnDate(evt, dateStr);
+            const banner = card.querySelector('.day-event-counter-banner');
+            if (banner) {
+              banner.className = `day-event-counter-banner ${updatedCompleted ? 'completed' : ''}`;
+              banner.innerHTML = `${updatedCompleted ? '✓ ' : '🔥 '}${dayInfo.label}`;
+            }
+
+            renderCalendar();
+            renderStatsBar();
+            renderTrackersList();
+          }, 300);
+        });
+      }
 
       container.appendChild(card);
     });
@@ -536,6 +610,12 @@ function openCreateEventModal(startDateStr = null) {
   checklistContainer.innerHTML = '';
   addChecklistBuilderItem('Stayed Clean & Focused', 'chk_1');
   addChecklistBuilderItem('Completed Daily Goal', 'chk_2');
+
+  // Reset Custom Quote & Enable Notes
+  const quoteInput = document.getElementById('eventCustomQuote');
+  if (quoteInput) quoteInput.value = '';
+  const notesCheckbox = document.getElementById('eventEnableNotes');
+  if (notesCheckbox) notesCheckbox.checked = true;
 
   openModal('createEventModal');
 }
@@ -584,9 +664,13 @@ function openEditEventModal(eventId) {
   checklistContainer.innerHTML = '';
   if (event.checklist && event.checklist.length > 0) {
     event.checklist.forEach(item => addChecklistBuilderItem(item.text, item.id));
-  } else {
-    addChecklistBuilderItem('Completed Daily Goal', 'chk_1');
   }
+
+  // Custom Quote & Enable Notes
+  const quoteInput = document.getElementById('eventCustomQuote');
+  if (quoteInput) quoteInput.value = event.customQuote || '';
+  const notesCheckbox = document.getElementById('eventEnableNotes');
+  if (notesCheckbox) notesCheckbox.checked = (event.enableNotes !== false);
 
   openModal('createEventModal');
 }
@@ -630,11 +714,7 @@ function addChecklistBuilderItem(initialText = '', existingId = null) {
   `;
 
   row.querySelector('.btn-remove-item').addEventListener('click', () => {
-    if (container.children.length > 1) {
-      row.remove();
-    } else {
-      showToast('Keep at least one checklist item for daily tracking');
-    }
+    row.remove();
   });
 
   container.appendChild(row);
@@ -686,12 +766,12 @@ function handleSaveEvent(e) {
     }
   });
 
-  if (checklist.length === 0) {
-    checklist.push({
-      id: `chk_1_${Date.now()}`,
-      text: 'Completed Day Target'
-    });
-  }
+  // Custom Quote & Daily Notes config
+  const customQuoteEl = document.getElementById('eventCustomQuote');
+  const customQuote = customQuoteEl ? customQuoteEl.value.trim() : '';
+
+  const enableNotesEl = document.getElementById('eventEnableNotes');
+  const enableNotes = enableNotesEl ? enableNotesEl.checked : true;
 
   const eventPayload = {
     title,
@@ -699,7 +779,9 @@ function handleSaveEvent(e) {
     durationDays,
     isOngoing,
     color,
-    checklist
+    checklist,
+    customQuote,
+    enableNotes
   };
 
   if (AppState.editingEventId) {

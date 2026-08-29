@@ -188,8 +188,27 @@
             <div id="checklistBuilderContainer" class="checklist-builder">
               <!-- Dynamically populated -->
             </div>
-            <button type="button" id="addChecklistItemBtn" class="btn btn-secondary btn-add-item">+ Add Another Checkbox</button>
-            <span class="form-hint">Create the checkboxes you want to check off each day.</span>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+              <button type="button" id="addChecklistItemBtn" class="btn btn-secondary btn-add-item">+ Add Another Checkbox</button>
+              <button type="button" id="clearChecklistBtn" class="btn btn-secondary btn-add-item" style="font-size:0.75rem; color:var(--text-muted);" title="Remove all checkboxes for manual written entry only">No Checkboxes (Manual Journal Only)</button>
+            </div>
+            <span class="form-hint">Add checkboxes to check off daily, or remove all if you want to write daily thoughts manually.</span>
+          </div>
+
+          <!-- Custom Quote / Daily Journal Prompt -->
+          <div class="form-group">
+            <label class="form-label" for="eventCustomQuote">Custom Quote / Daily Prompt (Optional)</label>
+            <input type="text" id="eventCustomQuote" class="form-input" placeholder="e.g. 'Small steps every day' or 'What did you achieve today?'" />
+            <span class="form-hint">This quote will appear daily during check-in to inspire or guide your daily manual log.</span>
+          </div>
+
+          <!-- Enable Daily Manual Note / Journaling Option -->
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text-primary); user-select:none;">
+              <input type="checkbox" id="eventEnableNotes" checked style="width:16px; height:16px; accent-color:var(--color-primary);" />
+              <span>Enable Daily Manual Note / Journal box</span>
+            </label>
+            <span class="form-hint">Allows typing custom daily notes, thoughts, and reflections each day.</span>
           </div>
 
           <!-- Color Theme Picker -->

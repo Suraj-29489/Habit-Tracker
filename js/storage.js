@@ -181,13 +181,38 @@ const StorageService = {
   },
 
   /**
+   * Get notes written for a specific event on a specific date
+   * @param {string} dateStr YYYY-MM-DD
+   * @param {string} eventId 
+   * @returns {string}
+   */
+  getEventDayNotes(dateStr, eventId) {
+    const dayLog = this.getDayLog(dateStr);
+    if (dayLog && dayLog[eventId] && typeof dayLog[eventId].notes === 'string') {
+      return dayLog[eventId].notes;
+    }
+    return '';
+  },
+
+  /**
+   * Save notes written for a specific event on a specific date
+   * @param {string} dateStr YYYY-MM-DD
+   * @param {string} eventId 
+   * @param {string} notes 
+   */
+  saveDayNotes(dateStr, eventId, notes) {
+    const currentChecks = this.getEventDayChecklist(dateStr, eventId);
+    this.saveDayChecklist(dateStr, eventId, currentChecks, notes);
+  },
+
+  /**
    * Save checklist item toggles for a specific day and event
    * @param {string} dateStr YYYY-MM-DD
    * @param {string} eventId 
    * @param {Object} checksMap Object with checkId -> boolean
    * @param {string} [notes] Optional note for the day
    */
-  saveDayChecklist(dateStr, eventId, checksMap, notes = '') {
+  saveDayChecklist(dateStr, eventId, checksMap, notes = null) {
     const logs = this.getAllLogs();
     if (!logs[dateStr]) {
       logs[dateStr] = {};
@@ -196,7 +221,7 @@ const StorageService = {
       logs[dateStr][eventId] = { checks: {}, notes: '', updatedAt: new Date().toISOString() };
     }
     logs[dateStr][eventId].checks = { ...checksMap };
-    if (notes !== undefined && notes !== null) {
+    if (notes !== null && notes !== undefined) {
       logs[dateStr][eventId].notes = notes;
     }
     logs[dateStr][eventId].updatedAt = new Date().toISOString();
@@ -226,11 +251,14 @@ const StorageService = {
    * @returns {boolean}
    */
   isEventFullyCompletedOnDate(event, dateStr) {
-    if (!event.checklist || event.checklist.length === 0) {
-      const currentChecks = this.getEventDayChecklist(dateStr, event.id);
-      return Boolean(currentChecks['default_check']);
-    }
+    const dayNotes = this.getEventDayNotes(dateStr, event.id);
     const currentChecks = this.getEventDayChecklist(dateStr, event.id);
+
+    // If event has no checkboxes (manual entry / journal tracker)
+    if (!event.checklist || event.checklist.length === 0) {
+      return Boolean(currentChecks['default_check'] || (dayNotes && dayNotes.trim().length > 0));
+    }
+
     return event.checklist.every(item => currentChecks[item.id] === true);
   },
 
@@ -242,8 +270,10 @@ const StorageService = {
    */
   getEventProgressOnDate(event, dateStr) {
     const currentChecks = this.getEventDayChecklist(dateStr, event.id);
+    const dayNotes = this.getEventDayNotes(dateStr, event.id);
+
     if (!event.checklist || event.checklist.length === 0) {
-      const isDone = Boolean(currentChecks['default_check']);
+      const isDone = Boolean(currentChecks['default_check'] || (dayNotes && dayNotes.trim().length > 0));
       return { completed: isDone ? 1 : 0, total: 1, percentage: isDone ? 100 : 0 };
     }
     const total = event.checklist.length;

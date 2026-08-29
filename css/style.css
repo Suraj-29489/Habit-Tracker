@@ -1056,6 +1056,77 @@ button, input, select, textarea {
   text-decoration: line-through;
 }
 
+/* Custom Quote Banner in Day Check-in */
+.day-quote-banner {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px dashed rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.day-quote-icon {
+  font-size: 1rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+/* Daily Manual Note / Journal Container */
+.day-notes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.day-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.day-notes-textarea {
+  width: 100%;
+  min-height: 72px;
+  max-height: 200px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.day-notes-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.day-notes-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.save-note-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;
