@@ -1,4 +1,4 @@
-const CACHE_NAME = 'streak-calendar-v6';
+const CACHE_NAME = 'streak-calendar-v7';
 
 const ASSETS = [
   '/',
@@ -8,10 +8,11 @@ const ASSETS = [
   '/js/calendar.js',
   '/js/storage.js',
   '/js/notifications.js',
-  '/assets/icon.svg',
+  '/assets/icon.png',
   '/assets/icon-192.png',
   '/assets/icon-512.png',
   '/assets/apple-touch-icon.png',
+  '/assets/favicon.png',
   '/manifest.json'
 ];
 

@@ -70,6 +70,22 @@ const CalendarService = {
   },
 
   /**
+   * Add/subtract days to a YYYY-MM-DD string reliably in UTC
+   * @param {string} dateStr YYYY-MM-DD
+   * @param {number} days 
+   * @returns {string} YYYY-MM-DD
+   */
+  addDays(dateStr, days) {
+    if (!dateStr) return this.formatDate(new Date());
+    const p = dateStr.split('-').map(Number);
+    const d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + days));
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  },
+
+  /**
    * Check if a specific date falls within an event's active timeline
    * @param {string} dateStr YYYY-MM-DD
    * @param {Object} event 
@@ -126,9 +142,11 @@ const CalendarService = {
    * @returns {{ currentStreak: number, maxStreak: number, totalCompletedDays: number }}
    */
   calculateEventStats(event) {
-    const today = new Date();
-    const todayStr = this.formatDate(today);
-    const startDate = this.parseDate(event.startDate);
+    if (!event || !event.startDate) {
+      return { currentStreak: 0, maxStreak: 0, totalCompletedDays: 0 };
+    }
+
+    const todayStr = this.formatDate(new Date());
     const daysSinceStart = this.diffDays(event.startDate, todayStr);
 
     if (daysSinceStart < 0) {
@@ -139,13 +157,10 @@ const CalendarService = {
     let tempStreak = 0;
     let totalCompletedDays = 0;
 
-    const maxDaysToCheck = event.durationDays ? Math.min(daysSinceStart + 1, event.durationDays) : daysSinceStart + 1;
+    const maxDaysToCheck = event.durationDays ? Math.min(daysSinceStart + 1, event.durationDays) : (daysSinceStart + 1);
 
     for (let i = 0; i < maxDaysToCheck; i++) {
-      const checkDate = new Date(startDate);
-      checkDate.setDate(checkDate.getDate() + i);
-      const checkDateStr = this.formatDate(checkDate);
-
+      const checkDateStr = this.addDays(event.startDate, i);
       const isCompleted = StorageService.isEventFullyCompletedOnDate(event, checkDateStr);
 
       if (isCompleted) {
@@ -163,26 +178,24 @@ const CalendarService = {
 
     // Determine current active streak ending at today or yesterday
     let activeStreak = 0;
-    let curDate = new Date(today);
+    let checkDateStr = todayStr;
 
     // Check today first
-    let curDateStr = this.formatDate(curDate);
-    if (this.isDateInEvent(curDateStr, event) && StorageService.isEventFullyCompletedOnDate(event, curDateStr)) {
+    if (this.isDateInEvent(checkDateStr, event) && StorageService.isEventFullyCompletedOnDate(event, checkDateStr)) {
       activeStreak++;
-      curDate.setDate(curDate.getDate() - 1);
+      checkDateStr = this.addDays(checkDateStr, -1);
     } else {
       // If today not yet completed, check if streak from yesterday continues
-      curDate.setDate(curDate.getDate() - 1);
+      checkDateStr = this.addDays(checkDateStr, -1);
     }
 
     while (true) {
-      curDateStr = this.formatDate(curDate);
-      if (this.diffDays(event.startDate, curDateStr) < 0) break;
-      if (!this.isDateInEvent(curDateStr, event)) break;
+      if (this.diffDays(event.startDate, checkDateStr) < 0) break;
+      if (!this.isDateInEvent(checkDateStr, event)) break;
 
-      if (StorageService.isEventFullyCompletedOnDate(event, curDateStr)) {
+      if (StorageService.isEventFullyCompletedOnDate(event, checkDateStr)) {
         activeStreak++;
-        curDate.setDate(curDate.getDate() - 1);
+        checkDateStr = this.addDays(checkDateStr, -1);
       } else {
         break;
       }
