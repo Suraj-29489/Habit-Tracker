@@ -12,7 +12,7 @@
   <!-- PWA Manifest & Favicon -->
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png" />
-  <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png" />
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 
   <!-- Stylesheet -->
@@ -28,7 +28,7 @@
     <!-- App Header -->
     <header class="app-header">
       <div class="brand-section">
-        <img src="assets/icon.png" alt="Habit Tracker Icon" class="brand-icon" />
+        <img src="assets/icon.svg" alt="App Icon" class="brand-icon" />
         <div>
           <h1 class="brand-title">Habit Tracker</h1>
           <p class="brand-subtitle">Daily counter, goals &amp; progress tracker</p>
@@ -50,16 +50,19 @@
 
     <!-- Quick Stats Bar -->
     <section class="stats-bar">
-      <div class="stat-card">
+      <div class="stat-card clickable" id="statCardActiveTrackers" title="Click to view all trackers">
         <span class="stat-label">Active Trackers</span>
         <span id="statActiveHabits" class="stat-value">0</span>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">Active Streak</span>
+      <div class="stat-card" id="statCardStreak">
+        <span class="stat-label">Best Streak</span>
         <span id="statHighestStreak" class="stat-value flame">0 🔥</span>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">Today's Check-ins</span>
+      <div class="stat-card clickable" id="statCardToday" title="Click to open Today's Check-in">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="stat-label">Today's Check-ins</span>
+          <span style="font-size:0.75rem;">👉</span>
+        </div>
         <span id="statTodayProgress" class="stat-value">0/0</span>
       </div>
     </section>
@@ -92,7 +95,7 @@
     </main>
 
     <!-- Active Trackers Overview Section -->
-    <section class="trackers-section">
+    <section class="trackers-section" id="trackersSection">
       <div class="section-title">
         <span>Active Challenges &amp; Habits</span>
       </div>

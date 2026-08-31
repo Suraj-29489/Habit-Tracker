@@ -205,6 +205,26 @@ function bindEvents() {
   const settingsInstallBtn = document.getElementById('settingsInstallBtn');
   if (settingsInstallBtn) settingsInstallBtn.addEventListener('click', triggerInstallPrompt);
 
+  // Quick Stats Bar: Click on Today's Check-ins card to open Today's check-in modal
+  const statCardToday = document.getElementById('statCardToday');
+  if (statCardToday) {
+    statCardToday.addEventListener('click', () => {
+      const todayStr = CalendarService.formatDate(new Date());
+      openDayDetailModal(todayStr);
+    });
+  }
+
+  // Quick Stats Bar: Click on Active Trackers card to scroll down to My Trackers section
+  const statCardActiveTrackers = document.getElementById('statCardActiveTrackers');
+  if (statCardActiveTrackers) {
+    statCardActiveTrackers.addEventListener('click', () => {
+      const trackersSection = document.getElementById('trackersSection');
+      if (trackersSection) {
+        trackersSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  }
+
   // Settings Actions
   document.getElementById('notificationToggleBtn').addEventListener('click', handleToggleNotification);
   document.getElementById('reminderTimeInput').addEventListener('change', handleSaveReminderTime);
@@ -256,30 +276,63 @@ function renderStatsBar() {
   const events = StorageService.getEvents();
   const todayStr = CalendarService.formatDate(new Date());
 
-  let totalActive = 0;
-  let highestStreak = 0;
-  let completedToday = 0;
-  let totalTodayEvents = 0;
+  let totalActiveTrackers = 0;
+  let highestActiveStreak = 0;
+  let completedTodayGoals = 0;
+  let totalTodayGoals = 0;
 
   events.forEach(evt => {
+    totalActiveTrackers++;
+
+    // Check if tracker is active on today's date
     if (CalendarService.isDateInEvent(todayStr, evt)) {
-      totalTodayEvents++;
-      if (StorageService.isEventFullyCompletedOnDate(evt, todayStr)) {
-        completedToday++;
+      const checksMap = StorageService.getEventDayChecklist(todayStr, evt.id);
+      const dayNotes = StorageService.getEventDayNotes(todayStr, evt.id);
+
+      if (evt.checklist && evt.checklist.length > 0) {
+        totalTodayGoals += evt.checklist.length;
+        evt.checklist.forEach(item => {
+          if (checksMap[item.id] === true) {
+            completedTodayGoals++;
+          }
+        });
+      } else {
+        totalTodayGoals += 1;
+        if (checksMap['default_check'] || (dayNotes && dayNotes.trim().length > 0)) {
+          completedTodayGoals++;
+        }
       }
     }
+
     const stats = CalendarService.calculateEventStats(evt);
-    if (stats.currentStreak > highestStreak) {
-      highestStreak = stats.currentStreak;
+    if (stats.currentStreak > highestActiveStreak) {
+      highestActiveStreak = stats.currentStreak;
     }
-    totalActive++;
   });
 
-  document.getElementById('statActiveHabits').textContent = totalActive;
-  document.getElementById('statHighestStreak').innerHTML = `${highestStreak} <span style="font-size:0.9rem">🔥</span>`;
-  document.getElementById('statTodayProgress').textContent = totalTodayEvents > 0 
-    ? `${completedToday}/${totalTodayEvents}` 
-    : '0/0';
+  const statActiveHabits = document.getElementById('statActiveHabits');
+  if (statActiveHabits) {
+    statActiveHabits.textContent = totalActiveTrackers;
+  }
+
+  const statHighestStreak = document.getElementById('statHighestStreak');
+  if (statHighestStreak) {
+    statHighestStreak.innerHTML = `${highestActiveStreak} <span style="font-size:0.9rem">🔥</span>`;
+  }
+
+  const statTodayProgress = document.getElementById('statTodayProgress');
+  if (statTodayProgress) {
+    statTodayProgress.textContent = `${completedTodayGoals}/${totalTodayGoals}`;
+  }
+
+  const statCardToday = document.getElementById('statCardToday');
+  if (statCardToday) {
+    if (totalTodayGoals > 0 && completedTodayGoals === totalTodayGoals) {
+      statCardToday.classList.add('completed');
+    } else {
+      statCardToday.classList.remove('completed');
+    }
+  }
 }
 
 /**

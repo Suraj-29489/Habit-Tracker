@@ -208,6 +208,32 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  transition: all var(--transition-fast);
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.stat-card.clickable:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.stat-card.clickable:active {
+  transform: translateY(0);
+}
+
+.stat-card.completed {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.stat-card.completed .stat-value {
+  color: #6ee7b7;
 }
 
 .stat-label {
