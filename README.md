@@ -1,4 +1,4 @@
-# 🔥 Habit & Daily Streak Tracker
+# 🔥 Habit Tracker
 
 A clean, dark-mode, mobile-optimized web application for daily streak counting, habit tracking, and calendar scheduling with local storage persistence and PWA support.
 

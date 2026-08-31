@@ -1,4 +1,4 @@
-const CACHE_NAME = 'streak-calendar-v5';
+const CACHE_NAME = 'streak-calendar-v6';
 
 const ASSETS = [
   '/',

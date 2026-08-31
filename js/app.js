@@ -838,7 +838,7 @@ async function handleToggleNotification() {
   if (result.success) {
     showToast('🔔 Notifications enabled! Daily reminders are active.');
     openSettingsModal();
-    NotificationService.sendNotification('🔥 Streak Notifications Enabled', {
+    NotificationService.sendNotification('🔥 Habit Tracker Reminders Enabled', {
       body: 'You will receive daily reminders to complete your check-in!'
     });
   } else {

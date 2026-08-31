@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Streak & Habit Calendar",
-  "short_name": "StreakCal",
+  "name": "Habit Tracker",
+  "short_name": "HabitTracker",
   "description": "Daily streak counter, habit tracker, and interactive calendar",
   "start_url": "/",
   "scope": "/",
